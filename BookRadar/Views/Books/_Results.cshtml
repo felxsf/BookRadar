@@ -1,0 +1,68 @@
+﻿@model List<BookRadar.Web.Models.BookVm>
+
+<div class="results-list">
+    @foreach (var book in Model)
+    {
+        <div class="result-item">
+            <div class="result-cover">
+                <div class="book-cover-placeholder">
+                    <i class="fas fa-book"></i>
+                </div>
+            </div>
+            
+            <div class="result-content">
+                <h4 class="result-title">
+                    <a href="#" class="book-title-link">
+                        @book.Titulo
+                        <i class="fas fa-external-link-alt external-link-icon"></i>
+                    </a>
+                </h4>
+                
+                <div class="result-meta">
+                    @if (book.AnioPublicacion.HasValue)
+                    {
+                        <span class="meta-badge">
+                            <i class="fas fa-calendar-alt"></i>
+                            @book.AnioPublicacion
+                        </span>
+                    }
+                    
+                    @if (!string.IsNullOrWhiteSpace(book.Editorial))
+                    {
+                        <span class="meta-badge">
+                            <i class="fas fa-building"></i>
+                            @book.Editorial
+                        </span>
+                    }
+                    
+                    <span class="meta-badge">
+                        <i class="fas fa-bookmark"></i>
+                        Libro
+                    </span>
+                </div>
+                
+                <div class="result-description">
+                    <p>
+                        Descubre esta obra literaria que forma parte de la colección de Open Library. 
+                        Un libro que enriquece tu biblioteca personal con conocimiento y entretenimiento.
+                    </p>
+                </div>
+                
+                <div class="result-actions">
+                    <button class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-heart me-1"></i>
+                        Favorito
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-share me-1"></i>
+                        Compartir
+                    </button>
+                    <a href="https://openlibrary.org" target="_blank" class="btn btn-sm btn-primary">
+                        <i class="fas fa-external-link-alt me-1"></i>
+                        Ver en Open Library
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>

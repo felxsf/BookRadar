@@ -1,0 +1,298 @@
+﻿@model List<BookRadar.Web.Models.SearchHistory>
+@{
+    ViewData["Title"] = "Historial completo";
+}
+
+<!-- Hero Section -->
+<section class="page-hero">
+    <div class="container">
+        <div class="page-hero-content text-center">
+            <div class="page-hero-icon mb-3">
+                <i class="fas fa-history"></i>
+            </div>
+            <h1 class="page-hero-title">Historial de Búsquedas</h1>
+            <p class="page-hero-subtitle">
+                Revisa todas las búsquedas que has realizado en BookRadar
+            </p>
+            <div class="page-hero-stats">
+                <div class="stat-item">
+                    <span class="stat-number">@Model.Count</span>
+                    <span class="stat-label">Búsquedas</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">@Model.Select(h => h.Autor).Distinct().Count()</span>
+                    <span class="stat-label">Autores únicos</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">@Model.Where(h => h.AnioPublicacion.HasValue).Count()</span>
+                    <span class="stat-label">Con año</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- History Content -->
+<section class="history-content">
+    <div class="container">
+        <div class="history-wrapper">
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="fas fa-list me-2"></i>
+                    Todas las búsquedas
+                </h3>
+                <div class="section-actions">
+                    <a asp-action="Index" class="btn btn-primary">
+                        <i class="fas fa-search me-2"></i>
+                        Nueva búsqueda
+                    </a>
+                </div>
+            </div>
+            
+            @if (Model.Any())
+            {
+                <!-- Filters -->
+                <div class="filters-compact mb-4">
+                    <div class="filters-grid">
+                        <div class="filter-item">
+                            <input type="text" class="filter-input" id="authorFilter" placeholder="Filtrar por autor..." />
+                        </div>
+                        <div class="filter-item">
+                            <input type="text" class="filter-input" id="titleFilter" placeholder="Filtrar por título..." />
+                        </div>
+                        <div class="filter-item">
+                            <select class="filter-input" id="yearFilter">
+                                <option value="">Todos los años</option>
+                                @foreach (var year in Model.Where(h => h.AnioPublicacion.HasValue).Select(h => h.AnioPublicacion.Value).Distinct().OrderByDescending(y => y))
+                                {
+                                    <option value="@year">@year</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="filter-actions">
+                            <button type="button" class="filter-btn secondary" onclick="clearFilters()">
+                                <i class="fas fa-times me-1"></i>
+                                Limpiar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Results Table -->
+                <div class="table-container">
+                    <table class="minimal-table" id="historyTable">
+                        <thead>
+                            <tr>
+                                <th class="sortable" onclick="sortTable(1)">
+                                    Autor <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th class="sortable" onclick="sortTable(2)">
+                                    Título <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th class="sortable" onclick="sortTable(3)">
+                                    Año <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th class="sortable" onclick="sortTable(4)">
+                                    Editorial <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th class="sortable" onclick="sortTable(5)">
+                                    Fecha consulta <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var h in Model)
+                            {
+                                <tr class="history-row" 
+                                    data-author="@h.Autor.ToLower()" 
+                                    data-title="@h.Titulo.ToLower()" 
+                                    data-year="@(h.AnioPublicacion?.ToString() ?? "")">
+                                    <td class="author-cell">
+                                        <i class="fas fa-user me-2"></i>
+                                        @h.Autor
+                                    </td>
+                                    <td class="title-cell">@h.Titulo</td>
+                                    <td>
+                                        @if (h.AnioPublicacion.HasValue)
+                                        {
+                                            <span class="year-badge">@h.AnioPublicacion</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="empty-value">-</span>
+                                        }
+                                    </td>
+                                    <td class="publisher-cell">
+                                        @(string.IsNullOrWhiteSpace(h.Editorial) ? "-" : h.Editorial)
+                                    </td>
+                                    <td class="date-text">
+                                        <i class="fas fa-clock me-2"></i>
+                                        @h.FechaConsulta.ToString("dd/MM/yyyy HH:mm")
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-outline-primary" onclick="searchAuthor('@h.Autor')" title="Buscar este autor">
+                                                <i class="fas fa-search"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboard('@h.Titulo')" title="Copiar título">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Export Options -->
+                <div class="export-section mt-4">
+                    <div class="export-actions">
+                        <button class="btn btn-outline-success" onclick="exportToCSV()">
+                            <i class="fas fa-download me-2"></i>
+                            Exportar a CSV
+                        </button>
+                        <button class="btn btn-outline-info" onclick="printHistory()">
+                            <i class="fas fa-print me-2"></i>
+                            Imprimir
+                        </button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-content">
+                        <i class="fas fa-search empty-icon"></i>
+                        <h4>No hay búsquedas en el historial</h4>
+                        <p>Realiza tu primera búsqueda para comenzar a explorar libros</p>
+                        <a asp-action="Index" class="btn btn-primary mt-3">
+                            <i class="fas fa-search me-2"></i>
+                            Comenzar a buscar
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<script>
+// Filtros
+document.getElementById('authorFilter').addEventListener('input', filterTable);
+document.getElementById('titleFilter').addEventListener('input', filterTable);
+document.getElementById('yearFilter').addEventListener('change', filterTable);
+
+function filterTable() {
+    const authorFilter = document.getElementById('authorFilter').value.toLowerCase();
+    const titleFilter = document.getElementById('titleFilter').value.toLowerCase();
+    const yearFilter = document.getElementById('yearFilter').value;
+    
+    const rows = document.querySelectorAll('.history-row');
+    
+    rows.forEach(row => {
+        const author = row.dataset.author;
+        const title = row.dataset.title;
+        const year = row.dataset.year;
+        
+        const authorMatch = author.includes(authorFilter);
+        const titleMatch = title.includes(titleFilter);
+        const yearMatch = !yearFilter || year === yearFilter;
+        
+        if (authorMatch && titleMatch && yearMatch) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function clearFilters() {
+    document.getElementById('authorFilter').value = '';
+    document.getElementById('titleFilter').value = '';
+    document.getElementById('yearFilter').value = '';
+    filterTable();
+}
+
+// Ordenamiento
+let sortDirection = 1;
+let lastSortColumn = -1;
+
+function sortTable(columnIndex) {
+    const table = document.getElementById('historyTable');
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    if (lastSortColumn === columnIndex) {
+        sortDirection *= -1;
+    } else {
+        sortDirection = 1;
+        lastSortColumn = columnIndex;
+    }
+    
+    rows.sort((a, b) => {
+        const aValue = a.cells[columnIndex].textContent.trim();
+        const bValue = b.cells[columnIndex].textContent.trim();
+        
+        if (columnIndex === 3) { // Año
+            const aYear = parseInt(aValue) || 0;
+            const bYear = parseInt(bValue) || 0;
+            return (aYear - bYear) * sortDirection;
+        } else if (columnIndex === 5) { // Fecha
+            const aDate = new Date(aValue);
+            const bDate = new Date(bValue);
+            return (aDate - bDate) * sortDirection;
+        } else {
+            return aValue.localeCompare(bValue) * sortDirection;
+        }
+    });
+    
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+// Acciones
+function searchAuthor(author) {
+    window.location.href = `/Books/Index?autor=${encodeURIComponent(author)}`;
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        // Mostrar notificación de éxito
+        const notification = document.createElement('div');
+        notification.className = 'copy-notification';
+        notification.textContent = 'Título copiado al portapapeles';
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 2000);
+    });
+}
+
+function exportToCSV() {
+    const rows = document.querySelectorAll('.history-row:not([style*="display: none"])');
+    let csv = 'Autor,Título,Año,Editorial,Fecha consulta\n';
+    
+    rows.forEach(row => {
+        const cells = row.cells;
+        const author = cells[0].textContent.trim();
+        const title = cells[1].textContent.trim();
+        const year = cells[2].textContent.trim();
+        const publisher = cells[3].textContent.trim();
+        const date = cells[4].textContent.trim();
+        
+        csv += `"${author}","${title}","${year}","${publisher}","${date}"\n`;
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'bookradar_historial.csv';
+    link.click();
+}
+
+function printHistory() {
+    window.print();
+}
+</script>

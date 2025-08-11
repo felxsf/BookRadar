@@ -1,0 +1,137 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - BookRadar</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/BookRadar.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="modern-header">
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container">
+                <a class="navbar-brand fw-bold d-flex align-items-center" asp-area="" asp-controller="Books" asp-action="Index">
+                    <div class="brand-icon me-3">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                    <span class="brand-text">BookRadar</span>
+                </a>
+                
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" 
+                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                <div class="navbar-collapse collapse d-lg-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Books" asp-action="Index">
+                                <i class="fas fa-search me-2"></i>
+                                <span>Buscar Libros</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Books" asp-action="History">
+                                <i class="fas fa-history me-2"></i>
+                                <span>Historial</span>
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <div class="navbar-nav">
+                        <div class="nav-item">
+                            <span class="navbar-text">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <span>Open Library API</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+    
+    <main role="main" class="main-content">
+        @RenderBody()
+    </main>
+
+    <footer class="modern-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-brand">
+                        <div class="footer-icon">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        <h5>BookRadar</h5>
+                    </div>
+                    <p class="footer-description">
+                        Descubre libros recientes por autor usando la API de Open Library. 
+                        Tu biblioteca digital personal en la nube.
+                    </p>
+                    <div class="footer-social">
+                        <a href="#" class="social-link" title="GitHub">
+                            <i class="fab fa-github"></i>
+                        </a>
+                        <a href="#" class="social-link" title="LinkedIn">
+                            <i class="fab fa-linkedin"></i>
+                        </a>
+                        <a href="#" class="social-link" title="Twitter">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h6>Enlaces Rápidos</h6>
+                    <ul class="footer-links">
+                        <li><a asp-controller="Books" asp-action="Index">Buscar Libros</a></li>
+                        <li><a asp-controller="Books" asp-action="History">Historial</a></li>
+                        <li><a href="https://openlibrary.org" target="_blank">Open Library</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h6>Tecnologías</h6>
+                    <ul class="footer-links">
+                        <li>ASP.NET Core 8.0</li>
+                        <li>Entity Framework</li>
+                        <li>Bootstrap 5</li>
+                        <li>Open Library API</li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h6>Contacto</h6>
+                    <p class="footer-contact">
+                        <i class="fas fa-envelope me-2"></i>
+                        info@bookradar.com
+                    </p>
+                    <p class="footer-contact">
+                        <i class="fas fa-map-marker-alt me-2"></i>
+                        Desarrollado con ❤️
+                    </p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <div class="footer-copyright">
+                    <p>&copy; 2025 BookRadar. Todos los derechos reservados.</p>
+                </div>
+                <div class="footer-powered">
+                    <span>Powered by Open Library</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
