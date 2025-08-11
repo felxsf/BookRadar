@@ -491,19 +491,19 @@ El diseño de BookRadar se basa en principios de **simplicidad**, **accesibilida
 
 ---
 
-### Migraciones y base de datos
-Genera la DB con EF Core:
+# Migraciones y base de datos
+## Genera la DB con EF Core:
 
 ### bash 
-dotnet ef migrations add InitialCreate
+```dotnet ef migrations add InitialCreate
 dotnet ef database update
-
+```
 
 
 ### Script SQL
 #### sql
 
-CREATE TABLE dbo.HistorialBusquedas (
+```CREATE TABLE dbo.HistorialBusquedas (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     Autor NVARCHAR(200) NOT NULL,
     Titulo NVARCHAR(500) NOT NULL,
@@ -513,12 +513,13 @@ CREATE TABLE dbo.HistorialBusquedas (
 );
 CREATE INDEX IX_Historial_Dedup
     ON dbo.HistorialBusquedas (Autor, Titulo, AnioPublicacion, Editorial);
+```
 
 
 ### (Stored Procedure)
 #### sql
 
-CREATE OR ALTER PROCEDURE dbo.InsertSearchHistory
+```CREATE OR ALTER PROCEDURE dbo.InsertSearchHistory
     @Autor NVARCHAR(200),
     @Titulo NVARCHAR(500),
     @AnioPublicacion INT = NULL,
@@ -530,16 +531,18 @@ BEGIN
     INSERT INTO dbo.HistorialBusquedas (Autor, Titulo, AnioPublicacion, Editorial, FechaConsulta)
     VALUES (@Autor, @Titulo, @AnioPublicacion, @Editorial, @FechaConsulta);
 END
+```
 
 
 ### Llamarlo desde C#:
 #### csharp
 
-await _db.Database.ExecuteSqlInterpolatedAsync($@"
+```await _db.Database.ExecuteSqlInterpolatedAsync($@"
     EXEC dbo.InsertSearchHistory 
     @Autor={form.Autor}, @Titulo={r.Titulo}, 
     @AnioPublicacion={r.AnioPublicacion}, @Editorial={r.Editorial}, 
     @FechaConsulta={ahora}");
+```
 
 
 **BookRadar** - Transformando la búsqueda de libros en una experiencia digital excepcional.
