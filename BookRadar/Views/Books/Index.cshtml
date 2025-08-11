@@ -11,25 +11,162 @@
                 <i class="fas fa-book-open"></i>
             </div>
             <h1 class="hero-title mb-3">BookRadar</h1>
+            <p class="hero-subtitle mb-4">Encuentra tu próximo libro favorito en segundos</p>
+            
             <div class="hero-stats">
                 <form asp-action="Index" method="post" class="search-form" id="searchForm">
                     @Html.AntiForgeryToken()
-                    <div class="search-input-group">
-                        <div class="search-input-wrapper">
-                            <i class="fas fa-user search-icon"></i>
-                            <input asp-for="Autor" class="search-input @(ViewData.ModelState[nameof(Model.Autor)]?.Errors.Any() == true ? "is-invalid" : "")"
-                                   placeholder="Ej: Gabriel García Márquez, Stephen King, Isabel Allende..." 
-                                   maxlength="100" />
-                            <button type="submit" class="search-button" id="searchButton">
-                                <i class="fas fa-search me-2"></i>
-                                Buscar
-                            </button>
-                        </div>
-                        <div class="validation-messages">
-                            <span asp-validation-for="Autor" class="text-danger validation-error"></span>
+                    
+                    <!-- Búsqueda Principal - Más Prominente -->
+                    <div class="main-search-section">
+                        <div class="search-input-group">
+                            <label for="Autor" class="search-label">
+                                <i class="fas fa-user"></i>
+                                ¿Qué autor te gustaría buscar?
+                            </label>
+                            <div class="search-input-wrapper">
+                                <input asp-for="Autor" 
+                                       class="search-input @(ViewData.ModelState[nameof(Model.Autor)]?.Errors.Any() == true ? "is-invalid" : "")"
+                                       placeholder="Ej: Gabriel García Márquez, Stephen King, Isabel Allende..." 
+                                       maxlength="100" 
+                                       id="Autor" />
+                                <button type="submit" class="search-button" id="searchButton">
+                                    <i class="fas fa-search"></i>
+                                    <span>Buscar Libros</span>
+                                </button>
+                            </div>
+                            @* <div class="validation-messages">
+                                <span asp-validation-for="Autor" class="text-danger validation-error"></span>
+                            </div> *@
                         </div>
                     </div>
 
+                    <!-- Opciones de Búsqueda -->
+                  @*   <div class="search-options mt-4">
+                        <div class="search-options-card">
+                            <div class="search-options-header">
+                                <div class="search-options-title">
+                                    <i class="fas fa-tune"></i>
+                                    <span>Opciones de Búsqueda</span>
+                                </div>
+                                <div class="search-options-subtitle">
+                                    Personaliza tu búsqueda según tus necesidades
+                                </div>
+                            </div>
+                            
+                            <div class="search-options-content">
+                                <!-- Opciones Principales -->
+                                <div class="search-option-group">
+                                    <div class="search-option-item" data-option="limitado">
+                                        <div class="option-radio">
+                                            <input type="radio" name="TipoBusquedaResultados" value="limitado" id="limitado" 
+                                                   @(Model.TipoBusquedaResultados == "limitado" ? "checked" : "") />
+                                            <label for="limitado" class="option-label">
+                                                <div class="option-icon">
+                                                    <i class="fas fa-bolt"></i>
+                                                </div>
+                                                <div class="option-content">
+                                                    <div class="option-title">Búsqueda Rápida</div>
+                                                    <div class="option-description">Hasta 100 resultados en segundos</div>
+                                                </div>
+                                                <div class="option-badge">Recomendado</div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="search-option-item" data-option="completo">
+                                        <div class="option-radio">
+                                            <input type="radio" name="TipoBusquedaResultados" value="completo" id="completo" 
+                                                   @(Model.TipoBusquedaResultados == "completo" ? "checked" : "") />
+                                            <label for="completo" class="option-label">
+                                                <div class="option-icon">
+                                                    <i class="fas fa-search-plus"></i>
+                                                </div>
+                                                <div class="option-content">
+                                                    <div class="option-title">Búsqueda Completa</div>
+                                                    <div class="option-description">Todos los resultados disponibles</div>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="search-option-item" data-option="personalizado">
+                                        <div class="option-radio">
+                                            <input type="radio" name="TipoBusquedaResultados" value="personalizado" id="personalizado" 
+                                                   @(Model.TipoBusquedaResultados == "personalizado" ? "checked" : "") />
+                                            <label for="personalizado" class="option-label">
+                                                <div class="option-icon">
+                                                    <i class="fas fa-sliders-h"></i>
+                                                </div>
+                                                <div class="option-content">
+                                                    <div class="option-title">Límite Personalizado</div>
+                                                    <div class="option-description">Elige cuántos resultados quieres</div>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Opción de límite personalizado -->
+                                <div class="custom-limit-section" id="limitePersonalizadoGroup" style="display: none;">
+                                    <div class="custom-limit-card">
+                                        <div class="custom-limit-header">
+                                            <i class="fas fa-list-ol"></i>
+                                            <span>¿Cuántos libros quieres ver?</span>
+                                        </div>
+                                        <div class="custom-limit-content">
+                                            <select asp-for="LimiteResultados" class="custom-limit-select">
+                                                @foreach (var limite in BookRadar.Web.Models.BookSearchPageVm.LimitesPredefinidos)
+                                                {
+                                                    <option value="@limite">@limite.ToString("N0") libros</option>
+                                                }
+                                            </select>
+                                            <div class="custom-limit-help">
+                                                <i class="fas fa-info-circle"></i>
+                                                Cantidades mayores pueden tomar más tiempo
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Opción de búsqueda completa -->
+                                <div class="search-all-section">
+                                    <div class="search-all-card">
+                                        <div class="search-all-content">
+                                            <div class="search-all-checkbox">
+                                                <input asp-for="BuscarTodosLosResultados" type="checkbox" id="buscarTodosCheck" />
+                                                <label for="BuscarTodosLosResultados" class="search-all-label">
+                                                    <div class="search-all-icon">
+                                                        <i class="fas fa-infinity"></i>
+                                                    </div>
+                                                    <div class="search-all-text">
+                                                        <span>Buscar TODOS los resultados disponibles</span>
+                                                        <small>⚠️ Puede tomar varios minutos</small>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Información contextual -->
+                            <div class="search-info-tips">
+                                <div class="info-tip-card">
+                                    <div class="info-tip-icon">
+                                        <i class="fas fa-lightbulb"></i>
+                                    </div>
+                                    <div class="info-tip-content">
+                                        <div class="info-tip-title">💡 Consejo:</div>
+                                        <div class="info-tip-text" id="searchTipText">
+                                            Para empezar, usa "Búsqueda Rápida" y obtén hasta 100 resultados en segundos.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+ *@
                     @if (!string.IsNullOrWhiteSpace(Model?.Message))
                     {
                         <div class="alert alert-info mt-4" role="alert">
@@ -73,8 +210,45 @@
                     </h3>
                     <span class="results-badge">
                         @Model.Resultados.Count libro@(Model.Resultados.Count != 1 ? "s" : "")
+                        @if (Model.TotalItems > Model.Resultados.Count)
+                        {
+                            <span class="text-muted">de @Model.TotalItems.ToString("N0") disponibles</span>
+                        }
                     </span>
                 </div>
+                
+                <!-- Información de la búsqueda -->
+                <div class="search-info mb-3">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                @if (Model.BuscarTodosLosResultados)
+                                {
+                                    <span>Búsqueda completa realizada</span>
+                                }
+                                else if (Model.TipoBusquedaResultados == "personalizado")
+                                {
+                                    <span>Límite personalizado: @Model.LimiteResultados.ToString("N0") libros</span>
+                                }
+                                else
+                                {
+                                    <span>Límite estándar: 100 libros</span>
+                                }
+                            </small>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            @if (Model.TotalItems > Model.Resultados.Count)
+                            {
+                                <small class="text-warning">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    Algunos resultados pueden no haberse cargado completamente
+                                </small>
+                            }
+                        </div>
+                    </div>
+                </div>
+                
                 <partial name="_Results" model="Model.Resultados" />
             </div>
         </div>
@@ -87,7 +261,7 @@
         <div class="features-wrapper">
             <div class="section-header text-center">
                 <h3 class="section-title">¿Por qué elegir BookRadar?</h3>
-                <p class="section-subtitle"> </p>
+                <p class="section-subtitle">La forma más fácil de encontrar tu próximo libro</p>
             </div>
             
             <div class="features-grid">
@@ -114,6 +288,14 @@
                     <h4>Historial Persistente</h4>
                     <p>Mantén un registro de todas tus búsquedas y descubrimientos</p>
                 </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-infinity"></i>
+                    </div>
+                    <h4>Búsqueda Completa</h4>
+                    <p>Obtén todos los resultados disponibles, no solo los primeros 100</p>
+                </div>
             </div>
         </div>
     </div>
@@ -122,6 +304,7 @@
 @section Scripts {
     <script src="~/js/validation-config.js"></script>
     <script src="~/js/validation.js"></script>
+    <script src="~/js/enhanced-ux.js"></script>
     <script>
         // Configuración específica para la página de búsqueda
         document.addEventListener('DOMContentLoaded', function() {
@@ -143,6 +326,57 @@
                     this.classList.remove('is-invalid', 'is-valid');
                 });
             }
+
+            // Manejar cambios en el tipo de búsqueda
+            const searchOptionItems = document.querySelectorAll('.search-option-item');
+            const limitePersonalizadoGroup = document.getElementById('limitePersonalizadoGroup');
+            const buscarTodosCheck = document.getElementById('buscarTodosCheck');
+            const searchTipText = document.getElementById('searchTipText');
+
+            function actualizarOpcionesBusqueda() {
+                const tipoSeleccionado = document.querySelector('input[name="TipoBusquedaResultados"]:checked')?.value || 'limitado';
+                const buscarTodos = buscarTodosCheck.checked;
+
+                if (buscarTodos) {
+                    // Si se selecciona buscar todos, deshabilitar otras opciones
+                    searchOptionItems.forEach(item => {
+                        const radio = item.querySelector('input[type="radio"]');
+                        radio.disabled = true;
+                        item.classList.add('disabled');
+                    });
+                    limitePersonalizadoGroup.style.display = 'none';
+                    buscarTodosCheck.checked = true;
+                    searchTipText.innerHTML = '⚠️ <strong>Búsqueda completa activada:</strong> Se buscarán todos los resultados disponibles. Esto puede tomar varios minutos.';
+                } else {
+                    // Habilitar opciones según el tipo seleccionado
+                    searchOptionItems.forEach(item => {
+                        const radio = item.querySelector('input[type="radio"]');
+                        radio.disabled = false;
+                        item.classList.remove('disabled');
+                    });
+                    
+                    if (tipoSeleccionado === 'personalizado') {
+                        limitePersonalizadoGroup.style.display = 'block';
+                        searchTipText.innerHTML = '💡 <strong>Límite personalizado:</strong> Selecciona cuántos libros quieres obtener. Cantidades mayores pueden tomar más tiempo.';
+                    } else if (tipoSeleccionado === 'completo') {
+                        limitePersonalizadoGroup.style.display = 'none';
+                        searchTipText.innerHTML = '🔍 <strong>Búsqueda completa:</strong> Se realizará una búsqueda completa para obtener todos los resultados disponibles.';
+                    } else {
+                        limitePersonalizadoGroup.style.display = 'none';
+                        searchTipText.innerHTML = '⚡ <strong>Búsqueda rápida:</strong> Obtendrás hasta 100 resultados en segundos. Perfecto para la mayoría de búsquedas.';
+                    }
+                }
+            }
+
+            // Event listeners para cambios
+            searchOptionItems.forEach(item => {
+                const radio = item.querySelector('input[type="radio"]');
+                radio.addEventListener('change', actualizarOpcionesBusqueda);
+            });
+            buscarTodosCheck.addEventListener('change', actualizarOpcionesBusqueda);
+
+            // Inicializar estado
+            actualizarOpcionesBusqueda();
 
             // Habilitar modo debug en desarrollo (opcional)
             if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {

@@ -32,6 +32,14 @@ public class BookSearchPageVm
     [StringLength(20, ErrorMessage = "El tipo de búsqueda no puede exceder los 20 caracteres")]
     public string? TipoBusqueda { get; set; } = "autor"; // autor, titulo, isbn, editorial
     
+    // Nuevas propiedades para controlar la búsqueda
+    [Range(1, 10000, ErrorMessage = "El límite de resultados debe estar entre 1 y 10000")]
+    public int LimiteResultados { get; set; } = 100; // Por defecto 100, pero configurable
+    
+    public bool BuscarTodosLosResultados { get; set; } = false; // Opción para buscar todos los resultados disponibles
+    
+    public string TipoBusquedaResultados { get; set; } = "limitado"; // "limitado", "completo", "personalizado"
+    
     public List<BookVm> Resultados { get; set; } = new();
     public List<SearchHistory> Historial { get; set; } = new();
     public string? Message { get; set; }
@@ -76,5 +84,17 @@ public class BookSearchPageVm
     public static readonly List<string> TiposBusqueda = new()
     {
         "autor", "titulo", "isbn", "editorial", "avanzada"
+    };
+    
+    // Lista de tipos de búsqueda de resultados
+    public static readonly List<string> TiposBusquedaResultados = new()
+    {
+        "limitado", "completo", "personalizado"
+    };
+    
+    // Lista de límites predefinidos
+    public static readonly List<int> LimitesPredefinidos = new()
+    {
+        50, 100, 250, 500, 1000, 2500, 5000, 10000
     };
 }

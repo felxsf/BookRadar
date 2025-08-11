@@ -69,6 +69,12 @@ public class BooksController : Controller
             }
         }
 
+        // Validar límite de resultados
+        if (form.LimiteResultados < 1 || form.LimiteResultados > 10000)
+        {
+            ModelState.AddModelError(nameof(form.LimiteResultados), "El límite de resultados debe estar entre 1 y 10000.");
+        }
+
         // Historial para la tabla inferior (si hay error también lo mostramos)
         form.Historial = await _db.HistorialBusquedas
                                   .OrderByDescending(h => h.FechaConsulta)
@@ -84,8 +90,46 @@ public class BooksController : Controller
 
         try
         {
-            var resultados = await _ol.BuscarPorAutorAsync(form.Autor!.Trim(), ct);
+            List<BookVm> resultados;
+            string mensajeResultado;
+
+            // Determinar qué tipo de búsqueda realizar
+            if (form.BuscarTodosLosResultados)
+            {
+                // Búsqueda completa - obtener todos los resultados disponibles
+                var resultadoCompleto = await _ol.BuscarPorAutorCompletoAsync(form.Autor!.Trim(), ct);
+                resultados = resultadoCompleto.Libros;
+                
+                if (resultadoCompleto.TotalResultados > 0)
+                {
+                    mensajeResultado = $"Se encontraron {resultadoCompleto.TotalResultados} libro(s) para '{form.Autor}' (búsqueda completa).";
+                    
+                    if (resultadoCompleto.HayMasResultados)
+                    {
+                        mensajeResultado += " Algunos resultados pueden no haberse cargado completamente debido a limitaciones de la API.";
+                    }
+                }
+                else
+                {
+                    mensajeResultado = $"No se encontraron libros para el autor '{form.Autor}'.";
+                }
+            }
+            else if (form.TipoBusquedaResultados == "personalizado" && form.LimiteResultados > 100)
+            {
+                // Búsqueda personalizada con límite alto
+                resultados = await _ol.BuscarPorAutorConLimiteAsync(form.Autor!.Trim(), form.LimiteResultados, ct);
+                mensajeResultado = $"Se encontraron {resultados.Count} libro(s) para '{form.Autor}' (límite: {form.LimiteResultados}).";
+            }
+            else
+            {
+                // Búsqueda estándar con límite por defecto o personalizado
+                var limite = form.LimiteResultados > 0 ? form.LimiteResultados : 100;
+                resultados = await _ol.BuscarPorAutorConPaginacionAsync(form.Autor!.Trim(), limite, ct);
+                mensajeResultado = $"Se encontraron {resultados.Count} libro(s) para '{form.Autor}' (límite: {limite}).";
+            }
+
             form.Resultados = resultados;
+            form.TotalItems = resultados.Count;
 
             // EXTRA: Evitar guardar si hubo una búsqueda del mismo autor hace < 1 min
             var umbral = DateTime.UtcNow.AddMinutes(-1);
@@ -108,15 +152,15 @@ public class BooksController : Controller
                 await _db.SaveChangesAsync(ct);
                 
                 // Mensaje de éxito
-                form.Message = $"Se encontraron {resultados.Count} libro(s) para '{form.Autor}' y se guardó en el historial.";
+                form.Message = mensajeResultado + " Los resultados se han guardado en el historial.";
             }
             else if (hayBusquedaReciente)
             {
-                form.Message = "Búsqueda reciente: no se volvió a guardar el resultado (menor a 1 minuto).";
+                form.Message = mensajeResultado + " Búsqueda reciente: no se volvió a guardar el resultado (menor a 1 minuto).";
             }
             else if (resultados.Count == 0)
             {
-                form.Message = $"No se encontraron libros para el autor '{form.Autor}'. Intenta con otro nombre.";
+                form.Message = mensajeResultado;
             }
         }
         catch (Exception ex)
