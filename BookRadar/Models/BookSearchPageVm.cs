@@ -1,16 +1,35 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace BookRadar.Web.Models;
 
 public class BookSearchPageVm
 {
+    [Required(ErrorMessage = "El campo Autor es obligatorio")]
+    [StringLength(100, ErrorMessage = "El nombre del autor no puede exceder los 100 caracteres")]
+    [RegularExpression(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\.\-']+$", ErrorMessage = "El nombre del autor solo puede contener letras, espacios, puntos, guiones y apóstrofes")]
     public string? Autor { get; set; }
+    
+    [StringLength(200, ErrorMessage = "El título no puede exceder los 200 caracteres")]
     public string? Titulo { get; set; }
+    
+    [StringLength(20, ErrorMessage = "El ISBN no puede exceder los 20 caracteres")]
+    [RegularExpression(@"^[0-9\-Xx]+$", ErrorMessage = "El ISBN solo puede contener números, guiones y la letra X")]
     public string? ISBN { get; set; }
+    
+    [StringLength(100, ErrorMessage = "La editorial no puede exceder los 100 caracteres")]
     public string? Editorial { get; set; }
+    
+    [Range(1800, 2030, ErrorMessage = "El año debe estar entre 1800 y 2030")]
     public int? AnioDesde { get; set; }
+    
+    [Range(1800, 2030, ErrorMessage = "El año debe estar entre 1800 y 2030")]
     public int? AnioHasta { get; set; }
+    
+    [StringLength(10, ErrorMessage = "El código de idioma no puede exceder los 10 caracteres")]
     public string? Idioma { get; set; }
+    
+    [StringLength(20, ErrorMessage = "El tipo de búsqueda no puede exceder los 20 caracteres")]
     public string? TipoBusqueda { get; set; } = "autor"; // autor, titulo, isbn, editorial
     
     public List<BookVm> Resultados { get; set; } = new();
@@ -18,19 +37,33 @@ public class BookSearchPageVm
     public string? Message { get; set; }
     
     // Propiedades para paginación
+    [Range(1, 100, ErrorMessage = "La página debe estar entre 1 y 100")]
     public int CurrentPage { get; set; } = 1;
+    
+    [Range(5, 50, ErrorMessage = "El tamaño de página debe estar entre 5 y 50")]
     public int PageSize { get; set; } = 10;
+    
     public int TotalItems { get; set; }
     public int TotalPages => (int)Math.Ceiling((double)TotalItems / PageSize);
     
     // Propiedades para filtrado
+    [StringLength(100, ErrorMessage = "El filtro de autor no puede exceder los 100 caracteres")]
     public string? FilterAutor { get; set; }
+    
+    [StringLength(200, ErrorMessage = "El filtro de título no puede exceder los 200 caracteres")]
     public string? FilterTitulo { get; set; }
+    
+    [StringLength(100, ErrorMessage = "El filtro de editorial no puede exceder los 100 caracteres")]
     public string? FilterEditorial { get; set; }
+    
+    [Range(1800, 2030, ErrorMessage = "El año del filtro debe estar entre 1800 y 2030")]
     public int? FilterAnio { get; set; }
     
     // Propiedades para ordenamiento
+    [StringLength(20, ErrorMessage = "El campo de ordenamiento no puede exceder los 20 caracteres")]
     public string SortBy { get; set; } = "FechaConsulta";
+    
+    [StringLength(10, ErrorMessage = "El orden no puede exceder los 10 caracteres")]
     public string SortOrder { get; set; } = "desc";
     
     // Lista de idiomas disponibles
