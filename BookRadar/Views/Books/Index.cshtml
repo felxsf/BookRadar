@@ -42,7 +42,7 @@
                     </div>
 
                     <!-- Opciones de Búsqueda -->
-                  @*   <div class="search-options mt-4">
+                   @*  <div class="search-options mt-4">
                         <div class="search-options-card">
                             <div class="search-options-header">
                                 <div class="search-options-title">
@@ -165,8 +165,10 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
- *@
+                    </div> *@
+
+
+
                     @if (!string.IsNullOrWhiteSpace(Model?.Message))
                     {
                         <div class="alert alert-info mt-4" role="alert">
@@ -248,8 +250,196 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Panel de Filtros y Búsqueda Avanzada -->
+                <div class="filters-panel mb-4" id="filtersPanel">
+                    <div class="filters-header">
+                        <div class="filters-title">
+                            <i class="fas fa-filter"></i>
+                            <span>Filtros y Búsqueda Avanzada</span>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="toggleFiltersBtn">
+                            <i class="fas fa-chevron-down"></i>
+                            <span>Mostrar Filtros</span>
+                        </button>
+                    </div>
+                    
+                    <div class="filters-content" id="filtersContent" style="display: none;">
+                        <div class="row">
+                            <!-- Búsqueda en resultados -->
+                            <div class="col-md-6 mb-3">
+                                <div class="filter-group">
+                                    <label for="searchInResults" class="filter-label">
+                                        <i class="fas fa-search"></i>
+                                        Buscar en resultados
+                                    </label>
+                                    <div class="search-input-group-sm">
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="searchInResults" 
+                                               placeholder="Filtrar por título, autor, año, idioma..." />
+                                        <button type="button" class="btn btn-primary btn-sm" id="applySearchFilter">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Filtro por idioma -->
+                            @* <div class="col-md-3 mb-3">
+                                <div class="filter-group">
+                                    <label for="languageFilter" class="filter-label">
+                                        <i class="fas fa-language"></i>
+                                        Idioma
+                                    </label>
+                                    <select class="form-select" id="languageFilter">
+                                        <option value="">Todos los idiomas</option>
+                                        <option value="es">Español</option>
+                                        <option value="en">Inglés</option>
+                                        <option value="fr">Francés</option>
+                                        <option value="de">Alemán</option>
+                                        <option value="it">Italiano</option>
+                                        <option value="pt">Portugués</option>
+                                    </select>
+                                </div>
+                            </div> *@
+                            
+                            <!-- Filtro por año -->
+                            <div class="col-md-3 mb-3">
+                                <div class="filter-group">
+                                    <label for="yearFilter" class="filter-label">
+                                        <i class="fas fa-calendar"></i>
+                                        Año
+                                    </label>
+                                    <select class="form-select" id="yearFilter">
+                                        <option value="">Todos los años</option>
+                                        <option value="2020-2024">2020-2024</option>
+                                        <option value="2010-2019">2010-2019</option>
+                                        <option value="2000-2009">2000-2009</option>
+                                        <option value="1990-1999">1990-1999</option>
+                                        <option value="1980-1989">1980-1989</option>
+                                        <option value="1970-1979">1970-1979</option>
+                                        <option value="1960-1969">1960-1969</option>
+                                        <option value="1950-1959">1950-1959</option>
+                                        <option value="1900-1949">1900-1949</option>
+                                        <option value="1800-1899">1800-1899</option>
+                                        <option value="1700-1799">1700-1799</option>
+                                        <option value="1600-1699">1600-1699</option>
+                                        <option value="1500-1599">1500-1599</option>
+                                        <option value="1400-1499">1400-1499</option>
+                                        <option value="1300-1399">1300-1399</option>
+                                        <option value="1200-1299">1200-1299</option>
+                                        <option value="1100-1199">1100-1199</option>
+                                        <option value="1000-1099">1000-1099</option>
+                                        <option value="0-999">Antes del año 1000</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                        @*     <!-- Filtro por número de páginas -->
+                            <div class="col-md-3 mb-3">
+                                <div class="filter-group">
+                                    <label for="pagesFilter" class="filter-label">
+                                        <i class="fas fa-file-alt"></i>
+                                        Páginas
+                                    </label>
+                                    <select class="form-select" id="pagesFilter">
+                                        <option value="">Cualquier longitud</option>
+                                        <option value="0-100">0-100 páginas</option>
+                                        <option value="101-300">101-300 páginas</option>
+                                        <option value="301-500">301-500 páginas</option>
+                                        <option value="501-800">501-800 páginas</option>
+                                        <option value="801-1200">801-1200 páginas</option>
+                                        <option value="1201+">Más de 1200 páginas</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Filtro por disponibilidad -->
+                            <div class="col-md-3 mb-3">
+                                <div class="filter-group">
+                                    <label for="availabilityFilter" class="filter-label">
+                                        <i class="fas fa-check-circle"></i>
+                                        Disponibilidad
+                                    </label>
+                                    <select class="form-select" id="availabilityFilter">
+                                        <option value="">Todos</option>
+                                        <option value="available">Disponible</option>
+                                        <option value="not-available">No disponible</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Ordenar por -->
+                            <div class="col-md-3 mb-3">
+                                <div class="filter-group">
+                                    <label for="sortBy" class="filter-label">
+                                        <i class="fas fa-sort"></i>
+                                        Ordenar por
+                                    </label>
+                                    <select class="form-select" id="sortBy">
+                                        <option value="relevance">Relevancia</option>
+                                        <option value="title">Título A-Z</option>
+                                        <option value="title-desc">Título Z-A</option>
+                                        <option value="year">Año (más reciente)</option>
+                                        <option value="year-asc">Año (más antiguo)</option>
+                                        <option value="pages">Páginas (menos a más)</option>
+                                        <option value="pages-desc">Páginas (más a menos)</option>
+                                    </select>
+                                </div>
+                            </div> *@
+                            
+                            <!-- Botones de acción -->
+                            <div class="col-md-3 mb-3">
+                                <div class="filter-actions">
+                                    <button type="button" class="btn btn-success btn-sm me-2" id="applyFiltersBtn">
+                                        <i class="fas fa-check"></i>
+                                        Aplicar Filtros
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="clearFiltersBtn">
+                                        <i class="fas fa-times"></i>
+                                        Limpiar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Contador de resultados filtrados -->
+                        <div class="filtered-results-info mt-3" id="filteredResultsInfo" style="display: none;">
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <span id="filteredResultsText">Mostrando resultados filtrados</span>
+                                <button type="button" class="btn btn-outline-info btn-sm ms-2" id="showAllResultsBtn">
+                                    <i class="fas fa-eye"></i>
+                                    Mostrar todos
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
                 <partial name="_Results" model="Model.Resultados" />
+                
+                <!-- Mensaje de no hay resultados filtrados -->
+                <div class="no-filtered-results" id="noFilteredResults" style="display: none;">
+                    <div class="empty-state text-center py-5">
+                        <div class="empty-icon mb-3">
+                            <i class="fas fa-search fa-3x text-muted"></i>
+                        </div>
+                        <h4 class="empty-title">No se encontraron resultados</h4>
+                        <p class="empty-description">
+                            No hay libros que coincidan con los filtros seleccionados.
+                            <br>
+                            Intenta ajustar tus criterios de búsqueda.
+                        </p>
+                        <button type="button" class="btn btn-primary" id="resetFiltersBtn">
+                            <i class="fas fa-undo"></i>
+                            Restablecer Filtros
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -305,6 +495,7 @@
     <script src="~/js/validation-config.js"></script>
     <script src="~/js/validation.js"></script>
     <script src="~/js/enhanced-ux.js"></script>
+    <script src="~/js/filters-manager.js"></script>
     <script>
         // Configuración específica para la página de búsqueda
         document.addEventListener('DOMContentLoaded', function() {
