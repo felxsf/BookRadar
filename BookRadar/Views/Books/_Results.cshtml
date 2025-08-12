@@ -5,18 +5,49 @@
     {
         <div class="result-item">
             <div class="result-cover">
-                <div class="book-cover-placeholder">
+                @if (!string.IsNullOrWhiteSpace(book.CoverUrl))
+                {
+                    <img src="@book.CoverUrl" alt="Portada de @book.Titulo" class="book-cover" 
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                }
+                <div class="book-cover-placeholder" style="@(string.IsNullOrWhiteSpace(book.CoverUrl) ? "" : "display: none;")">
                     <i class="fas fa-book"></i>
                 </div>
             </div>
             
             <div class="result-content">
                 <h4 class="result-title">
-                    <a href="#" class="book-title-link">
-                        @book.Titulo
-                        <i class="fas fa-external-link-alt external-link-icon"></i>
-                    </a>
+                    @if (!string.IsNullOrWhiteSpace(book.OpenLibraryUrl))
+                    {
+                        <a href="@book.OpenLibraryUrl" target="_blank" class="book-title-link">
+                            @book.Titulo
+                            <i class="fas fa-external-link-alt external-link-icon"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="book-title">@book.Titulo</span>
+                    }
+                    
+                    @if (!string.IsNullOrWhiteSpace(book.OpenLibraryUrl))
+                    {
+                        <div class="title-actions">
+                            <a href="@Url.Action("Details", "Books", new { workKey = book.OpenLibraryUrl.Replace("https://openlibrary.org", "") })" 
+                               class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Detalles
+                            </a>
+                        </div>
+                    }
                 </h4>
+                
+                @if (!string.IsNullOrWhiteSpace(book.Autor))
+                {
+                    <div class="result-author">
+                        <i class="fas fa-user me-1"></i>
+                        <span>@book.Autor</span>
+                    </div>
+                }
                 
                 <div class="result-meta">
                     @if (book.AnioPublicacion.HasValue)
@@ -35,18 +66,57 @@
                         </span>
                     }
                     
-                    <span class="meta-badge">
-                        <i class="fas fa-bookmark"></i>
-                        Libro
-                    </span>
+                    @if (!string.IsNullOrWhiteSpace(book.Idioma))
+                    {
+                        <span class="meta-badge">
+                            <i class="fas fa-language"></i>
+                            @book.Idioma
+                        </span>
+                    }
+                    
+                    @if (!string.IsNullOrWhiteSpace(book.Formato))
+                    {
+                        <span class="meta-badge">
+                            <i class="fas fa-file-alt"></i>
+                            @book.Formato
+                        </span>
+                    }
                 </div>
                 
-                <div class="result-description">
-                    <p>
-                        Descubre esta obra literaria que forma parte de la colección de Open Library. 
-                        Un libro que enriquece tu biblioteca personal con conocimiento y entretenimiento.
-                    </p>
-                </div>
+                @if (book.Generos.Any())
+                {
+                    <div class="result-genres">
+                        @foreach (var genero in book.Generos.Take(3))
+                        {
+                            <span class="genre-badge">
+                                <i class="fas fa-tag me-1"></i>
+                                @genero
+                            </span>
+                        }
+                        @if (book.Generos.Count > 3)
+                        {
+                            <span class="genre-badge more-genres">
+                                +@(book.Generos.Count - 3) más
+                            </span>
+                        }
+                    </div>
+                }
+                
+                @if (!string.IsNullOrWhiteSpace(book.Descripcion))
+                {
+                    <div class="result-description">
+                        <p>@book.Descripcion</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="result-description">
+                        <p>
+                            Descubre esta obra literaria que forma parte de la colección de Open Library. 
+                            Un libro que enriquece tu biblioteca personal con conocimiento y entretenimiento.
+                        </p>
+                    </div>
+                }
                 
                 <div class="result-actions">
                     <button class="btn btn-sm btn-outline-primary">
@@ -57,10 +127,20 @@
                         <i class="fas fa-share me-1"></i>
                         Compartir
                     </button>
-                    <a href="https://openlibrary.org" target="_blank" class="btn btn-sm btn-primary">
-                        <i class="fas fa-external-link-alt me-1"></i>
-                        Ver en Open Library
-                    </a>
+                    @if (!string.IsNullOrWhiteSpace(book.OpenLibraryUrl))
+                    {
+                        <a href="@book.OpenLibraryUrl" target="_blank" class="btn btn-sm btn-primary">
+                            <i class="fas fa-external-link-alt me-1"></i>
+                            Ver en Open Library
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="https://openlibrary.org" target="_blank" class="btn btn-sm btn-primary">
+                            <i class="fas fa-external-link-alt me-1"></i>
+                            Open Library
+                        </a>
+                    }
                 </div>
             </div>
         </div>

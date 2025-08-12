@@ -201,4 +201,42 @@ public class BooksController : Controller
             return View(new List<SearchHistory>());
         }
     }
+
+    [HttpGet]
+    public async Task<IActionResult> Details(string workKey, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(workKey))
+        {
+            return RedirectToAction(nameof(Index));
+        }
+
+        try
+        {
+            var libro = await _ol.ObtenerDetallesLibroAsync(workKey, ct);
+            
+            if (libro == null)
+            {
+                // Si no podemos obtener detalles, crear un libro básico con la información disponible
+                libro = new BookVm
+                {
+                    Titulo = "Información no disponible",
+                    OpenLibraryUrl = $"https://openlibrary.org{workKey}"
+                };
+            }
+
+            return View(libro);
+        }
+        catch (Exception ex)
+        {
+            // Log del error (en producción usar ILogger)
+            ModelState.AddModelError("", "Ocurrió un error al cargar los detalles del libro.");
+            
+            // En desarrollo, mostrar más detalles del error
+            #if DEBUG
+            ModelState.AddModelError("", $"Error detallado: {ex.Message}");
+            #endif
+            
+            return RedirectToAction(nameof(Index));
+        }
+    }
 }

@@ -12,7 +12,28 @@ public class OpenLibraryService : IOpenLibraryService
     public OpenLibraryService(HttpClient http) => _http = http;
 
     private record OpenLibraryResponse(List<Doc> docs, int numFound, int start, bool? numFoundExact);
-    private record Doc(string? title, int? first_publish_year, List<string>? publisher);
+    
+    // Modelo expandido para capturar más información de la API
+    private record Doc(
+        string? title,
+        int? first_publish_year,
+        List<string>? publisher,
+        List<string>? author_name,
+        List<string>? author_key,
+        string? cover_edition_key,
+        long? cover_i,
+        string? ebook_access,
+        int? edition_count,
+        bool? has_fulltext,
+        List<string>? language,
+        string? key,
+        string? lending_edition_s,
+        string? lending_identifier_s,
+        bool? public_scan_b,
+        string? subtitle,
+        List<string>? ia,
+        string? ia_collection_s
+    );
 
     public async Task<List<BookVm>> BuscarPorAutorAsync(string autor, CancellationToken ct = default)
     {
@@ -32,12 +53,7 @@ public class OpenLibraryService : IOpenLibraryService
         foreach (var d in resp.docs)
         {
             if (string.IsNullOrWhiteSpace(d.title)) continue;
-            list.Add(new BookVm
-            {
-                Titulo = d.title.Trim(),
-                AnioPublicacion = d.first_publish_year,
-                Editorial = d.publisher?.FirstOrDefault()
-            });
+            list.Add(ConvertirDocABookVm(d));
         }
 
         // Opcional: ordenar por año desc, título asc
@@ -155,15 +171,60 @@ public class OpenLibraryService : IOpenLibraryService
         foreach (var d in docs)
         {
             if (string.IsNullOrWhiteSpace(d.title)) continue;
-            libros.Add(new BookVm
-            {
-                Titulo = d.title.Trim(),
-                AnioPublicacion = d.first_publish_year,
-                Editorial = d.publisher?.FirstOrDefault()
-            });
+            libros.Add(ConvertirDocABookVm(d));
         }
         
         return libros;
+    }
+
+    // Método mejorado para convertir Doc a BookVm con toda la información disponible
+    private BookVm ConvertirDocABookVm(Doc doc)
+    {
+        var book = new BookVm
+        {
+            Titulo = doc.title?.Trim() ?? "",
+            AnioPublicacion = doc.first_publish_year,
+            Editorial = doc.publisher?.FirstOrDefault(),
+            Autor = doc.author_name?.FirstOrDefault(),
+            Generos = new List<string>(), // OpenLibrary no proporciona géneros directamente
+            Idioma = doc.language?.FirstOrDefault()?.ToUpperInvariant(),
+            Formato = DeterminarFormato(doc.ebook_access),
+            OpenLibraryUrl = doc.key != null ? $"https://openlibrary.org{doc.key}" : null,
+            CoverUrl = doc.cover_i.HasValue ? $"https://covers.openlibrary.org/b/id/{doc.cover_i}-L.jpg" : null,
+            NumeroPaginas = null, // OpenLibrary no proporciona número de páginas en la búsqueda
+            Descripcion = doc.subtitle,
+            ISBN = null // OpenLibrary no proporciona ISBN en la búsqueda básica
+        };
+
+        // Agregar información adicional si está disponible
+        if (doc.edition_count.HasValue)
+        {
+            book.Descripcion = $"{book.Descripcion} (Ediciones: {doc.edition_count})".Trim();
+        }
+
+        if (doc.has_fulltext == true)
+        {
+            book.Generos.Add("Texto completo disponible");
+        }
+
+        if (doc.ia?.Any() == true)
+        {
+            book.Generos.Add("Disponible en Internet Archive");
+        }
+
+        return book;
+    }
+
+    private string? DeterminarFormato(string? ebookAccess)
+    {
+        return ebookAccess switch
+        {
+            "borrowable" => "Ebook prestable",
+            "printdisabled" => "Ebook (solo lectura)",
+            "public" => "Ebook público",
+            "no_ebook" => "Solo impreso",
+            _ => "Formato no especificado"
+        };
     }
 
     // Método para búsqueda con límite personalizado
@@ -182,6 +243,66 @@ public class OpenLibraryService : IOpenLibraryService
             // Necesitamos múltiples llamadas
             var resultado = await BuscarPorAutorCompletoAsync(autor, ct);
             return resultado.Libros.Take(limite).ToList();
+        }
+    }
+
+    // Nuevo método para obtener información detallada de un libro específico
+    public async Task<BookVm?> ObtenerDetallesLibroAsync(string workKey, CancellationToken ct = default)
+    {
+        try
+        {
+            var url = $"works/{workKey}.json";
+            var work = await _http.GetFromJsonAsync<dynamic>(url, ct);
+            
+            if (work == null) return null;
+
+            // Crear un libro con la información disponible
+            var libro = new BookVm
+            {
+                Titulo = work.title?.ToString() ?? "Título no disponible",
+                Autor = work.authors?.FirstOrDefault()?.name?.ToString(),
+                AnioPublicacion = work.first_publish_date != null ? 
+                    int.TryParse(work.first_publish_date.ToString(), out int year) ? year : null : null,
+                Descripcion = work.description?.ToString() ?? work.subtitle?.ToString(),
+                Idioma = work.languages?.FirstOrDefault()?.key?.ToString()?.ToUpperInvariant(),
+                OpenLibraryUrl = $"https://openlibrary.org{workKey}",
+                Generos = new List<string>()
+            };
+
+            // Agregar géneros si están disponibles
+            if (work.subjects != null)
+            {
+                foreach (var subject in work.subjects)
+                {
+                    if (subject.name != null)
+                    {
+                        libro.Generos.Add(subject.name.ToString());
+                    }
+                }
+            }
+
+            // Agregar información de formato
+            if (work.ebook_access != null)
+            {
+                libro.Formato = DeterminarFormato(work.ebook_access.ToString());
+            }
+
+            // Agregar información de portada
+            if (work.covers != null && work.covers.Count > 0)
+            {
+                var coverId = work.covers[0];
+                if (coverId != null)
+                {
+                    libro.CoverUrl = $"https://covers.openlibrary.org/b/id/{coverId}-L.jpg";
+                }
+            }
+
+            return libro;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error obteniendo detalles del libro {workKey}: {ex.Message}");
+            return null;
         }
     }
 }

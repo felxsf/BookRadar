@@ -8,6 +8,7 @@ public interface IOpenLibraryService
     Task<List<BookVm>> BuscarPorAutorConPaginacionAsync(string autor, int? limite = null, CancellationToken ct = default);
     Task<OpenLibrarySearchResult> BuscarPorAutorCompletoAsync(string autor, CancellationToken ct = default);
     Task<List<BookVm>> BuscarPorAutorConLimiteAsync(string autor, int limite, CancellationToken ct = default);
+    Task<BookVm?> ObtenerDetallesLibroAsync(string workKey, CancellationToken ct = default);
 }
 
 public class OpenLibrarySearchResult

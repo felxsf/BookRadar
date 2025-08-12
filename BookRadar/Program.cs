@@ -9,7 +9,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// HttpClient tipado para Open Library con mejor configuración
+// HttpClient tipado para Open Library 
 builder.Services.AddHttpClient<IOpenLibraryService, OpenLibraryService>(client =>
 {
     client.BaseAddress = new Uri("https://openlibrary.org/");
