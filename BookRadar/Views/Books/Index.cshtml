@@ -19,25 +19,146 @@
                     
                     <!-- Búsqueda Principal - Más Prominente -->
                     <div class="main-search-section">
-                        <div class="search-input-group">
-                            <label for="Autor" class="search-label">
-                                <i class="fas fa-user"></i>
-                                ¿Qué autor te gustaría buscar?
-                            </label>
-                            <div class="search-input-wrapper">
-                                <input asp-for="Autor" 
-                                       class="search-input @(ViewData.ModelState[nameof(Model.Autor)]?.Errors.Any() == true ? "is-invalid" : "")"
-                                       placeholder="Ej: Gabriel García Márquez, Stephen King, Isabel Allende..." 
-                                       maxlength="100" 
-                                       id="Autor" />
-                                <button type="submit" class="search-button" id="searchButton">
-                                    <i class="fas fa-search"></i>
-                                    <span>Buscar Libros</span>
+                        <div class="search-tabs mb-3">
+                            <div class="nav nav-tabs" id="searchTabs" role="tablist">
+                                <button class="nav-link active" id="autor-tab" data-bs-toggle="tab" data-bs-target="#autor-search" type="button" role="tab">
+                                    <i class="fas fa-user me-2"></i>Buscar por Autor
                                 </button>
+                                @* <button class="nav-link" id="titulo-tab" data-bs-toggle="tab" data-bs-target="#titulo-search" type="button" role="tab">
+                                    <i class="fas fa-book me-2"></i>Buscar por Título
+                                </button> *@
+                                @* <button class="nav-link" id="avanzada-tab" data-bs-toggle="tab" data-bs-target="#avanzada-search" type="button" role="tab">
+                                    <i class="fas fa-search-plus me-2"></i>Búsqueda Avanzada
+                                </button> *@
                             </div>
-                            @* <div class="validation-messages">
-                                <span asp-validation-for="Autor" class="text-danger validation-error"></span>
-                            </div> *@
+                        </div>
+
+                        <div class="tab-content" id="searchTabContent">
+                            <!-- Búsqueda por Autor -->
+                            <div class="tab-pane fade show active" id="autor-search" role="tabpanel">
+                                <div class="search-input-group">
+                                    <label for="Autor" class="search-label">
+                                        <i class="fas fa-user"></i>
+                                        ¿Qué autor te gustaría buscar?
+                                    </label>
+                                    <div class="search-input-wrapper">
+                                        <input asp-for="Autor" 
+                                               class="search-input @(ViewData.ModelState[nameof(Model.Autor)]?.Errors.Any() == true ? "is-invalid" : "")"
+                                               placeholder="Ej: Gabriel García Márquez, Stephen King, Isabel Allende..." 
+                                               maxlength="100" 
+                                               id="Autor" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Búsqueda por Título -->
+                            <div class="tab-pane fade" id="titulo-search" role="tabpanel">
+                                <div class="search-input-group">
+                                    <label for="Titulo" class="search-label">
+                                        <i class="fas fa-book"></i>
+                                        ¿Qué título te gustaría buscar?
+                                    </label>
+                                    <div class="search-input-wrapper">
+                                        <input asp-for="Titulo" 
+                                               class="search-input @(ViewData.ModelState[nameof(Model.Titulo)]?.Errors.Any() == true ? "is-invalid" : "")"
+                                               placeholder="Ej: Cien años de soledad, El Señor de los Anillos..." 
+                                               maxlength="200" 
+                                               id="Titulo" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Búsqueda Avanzada -->
+                            <div class="tab-pane fade" id="avanzada-search" role="tabpanel">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="TituloAvanzado" class="search-label">
+                                            <i class="fas fa-book"></i>
+                                            Título
+                                        </label>
+                                        <input asp-for="Titulo" 
+                                               class="form-control" 
+                                               placeholder="Título del libro..." 
+                                               maxlength="200" 
+                                               id="TituloAvanzado" />
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="AutorAvanzado" class="search-label">
+                                            <i class="fas fa-user"></i>
+                                            Autor
+                                        </label>
+                                        <input asp-for="Autor" 
+                                               class="form-control" 
+                                               placeholder="Nombre del autor..." 
+                                               maxlength="100" 
+                                               id="AutorAvanzado" />
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label for="IdiomaAvanzado" class="search-label">
+                                            <i class="fas fa-language"></i>
+                                            Idioma
+                                        </label>
+                                        <select asp-for="Idioma" class="form-select" id="IdiomaAvanzado">
+                                            <option value="">Todos los idiomas</option>
+                                            @foreach (var idioma in BookRadar.Web.Models.BookSearchPageVm.IdiomasDisponibles)
+                                            {
+                                                <option value="@idioma">@idioma.ToUpper()</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="FormatoAvanzado" class="search-label">
+                                            <i class="fas fa-file-alt"></i>
+                                            Formato
+                                        </label>
+                                        <select asp-for="Formato" class="form-select" id="FormatoAvanzado">
+                                            <option value="">Todos los formatos</option>
+                                            @foreach (var formato in BookRadar.Web.Models.BookSearchPageVm.FormatosDisponibles)
+                                            {
+                                                <option value="@formato">@formato</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="AnioDesdeAvanzado" class="search-label">
+                                            <i class="fas fa-calendar"></i>
+                                            Año desde
+                                        </label>
+                                        <input asp-for="AnioDesde" 
+                                               class="form-control" 
+                                               type="number" 
+                                               min="1800" 
+                                               max="2030" 
+                                               placeholder="1800" 
+                                               id="AnioDesdeAvanzado" />
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label for="AnioHastaAvanzado" class="search-label">
+                                            <i class="fas fa-calendar"></i>
+                                            Año hasta
+                                        </label>
+                                        <input asp-for="AnioHasta" 
+                                               class="form-control" 
+                                               type="number" 
+                                               min="1800" 
+                                               max="2030" 
+                                               placeholder="2030" 
+                                               id="AnioHastaAvanzado" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botón de búsqueda común -->
+                        <div class="search-button-wrapper mt-3">
+                            <button type="submit" class="search-button" id="searchButton">
+                                <i class="fas fa-search"></i>
+                                <span>Buscar Libros</span>
+                            </button>
                         </div>
                     </div>
 
@@ -496,6 +617,7 @@
     <script src="~/js/validation.js"></script>
     <script src="~/js/enhanced-ux.js"></script>
     <script src="~/js/filters-manager.js"></script>
+    <script src="~/js/search-tabs.js"></script>
     <script>
         // Configuración específica para la página de búsqueda
         document.addEventListener('DOMContentLoaded', function() {

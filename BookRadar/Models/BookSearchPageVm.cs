@@ -5,7 +5,6 @@ namespace BookRadar.Web.Models;
 
 public class BookSearchPageVm
 {
-    [Required(ErrorMessage = "El campo Autor es obligatorio")]
     [StringLength(100, ErrorMessage = "El nombre del autor no puede exceder los 100 caracteres")]
     [RegularExpression(@"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\.\-']+$", ErrorMessage = "El nombre del autor solo puede contener letras, espacios, puntos, guiones y apóstrofes")]
     public string? Autor { get; set; }
@@ -30,7 +29,10 @@ public class BookSearchPageVm
     public string? Idioma { get; set; }
     
     [StringLength(20, ErrorMessage = "El tipo de búsqueda no puede exceder los 20 caracteres")]
-    public string? TipoBusqueda { get; set; } = "autor"; // autor, titulo, isbn, editorial
+    public string? TipoBusqueda { get; set; } = "autor"; // autor, titulo, isbn, editorial, avanzada
+    
+    [StringLength(20, ErrorMessage = "El formato no puede exceder los 20 caracteres")]
+    public string? Formato { get; set; }
     
     // Nuevas propiedades para controlar la búsqueda
     [Range(1, 10000, ErrorMessage = "El límite de resultados debe estar entre 1 y 10000")]
@@ -84,6 +86,12 @@ public class BookSearchPageVm
     public static readonly List<string> TiposBusqueda = new()
     {
         "autor", "titulo", "isbn", "editorial", "avanzada"
+    };
+    
+    // Lista de formatos disponibles
+    public static readonly List<string> FormatosDisponibles = new()
+    {
+        "ebook", "hardcover", "paperback", "audiobook", "pdf", "epub", "mobi", "kindle"
     };
     
     // Lista de tipos de búsqueda de resultados

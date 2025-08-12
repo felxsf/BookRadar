@@ -28,17 +28,17 @@
                     {
                         <span class="book-title">@book.Titulo</span>
                     }
-                    
-                    @if (!string.IsNullOrWhiteSpace(book.OpenLibraryUrl))
-                    {
-                        <div class="title-actions">
-                            <a href="@Url.Action("Details", "Books", new { workKey = book.OpenLibraryUrl.Replace("https://openlibrary.org", "") })" 
-                               class="btn btn-sm btn-outline-info">
-                                <i class="fas fa-info-circle me-1"></i>
-                                Detalles
-                            </a>
-                        </div>
-                    }
+                
+                                @if (!string.IsNullOrWhiteSpace(book.WorkKey))
+                {
+                    @* <div class="title-actions">
+                        <a href="@Url.Action("Details", "Books", new { workKey = book.WorkKey })" 
+                           class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Detalles
+                        </a>
+                    </div> *@
+                }
                 </h4>
                 
                 @if (!string.IsNullOrWhiteSpace(book.Autor))

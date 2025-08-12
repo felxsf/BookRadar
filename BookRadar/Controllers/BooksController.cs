@@ -35,28 +35,43 @@ public class BooksController : Controller
     public async Task<IActionResult> Index(BookSearchPageVm form, CancellationToken ct)
     {
         // Validaciones personalizadas del lado del servidor
-        if (string.IsNullOrWhiteSpace(form.Autor))
+        if (string.IsNullOrWhiteSpace(form.Autor) && string.IsNullOrWhiteSpace(form.Titulo))
         {
-            ModelState.AddModelError(nameof(form.Autor), "Debes ingresar un autor.");
+            ModelState.AddModelError("", "Debes ingresar un autor o un título para realizar la búsqueda.");
         }
         else
         {
-            // Validar longitud mínima
-            if (form.Autor.Trim().Length < 2)
+            // Validar autor si se proporciona
+            if (!string.IsNullOrWhiteSpace(form.Autor))
             {
-                ModelState.AddModelError(nameof(form.Autor), "El nombre del autor debe tener al menos 2 caracteres.");
+                if (form.Autor.Trim().Length < 2)
+                {
+                    ModelState.AddModelError(nameof(form.Autor), "El nombre del autor debe tener al menos 2 caracteres.");
+                }
+                
+                if (form.Autor.Trim().Length > 100)
+                {
+                    ModelState.AddModelError(nameof(form.Autor), "El nombre del autor no puede exceder los 100 caracteres.");
+                }
+                
+                if (!System.Text.RegularExpressions.Regex.IsMatch(form.Autor.Trim(), @"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\.\-']+$"))
+                {
+                    ModelState.AddModelError(nameof(form.Autor), "El nombre del autor solo puede contener letras, espacios, puntos, guiones y apóstrofes.");
+                }
             }
-            
-            // Validar longitud máxima
-            if (form.Autor.Trim().Length > 100)
+
+            // Validar título si se proporciona
+            if (!string.IsNullOrWhiteSpace(form.Titulo))
             {
-                ModelState.AddModelError(nameof(form.Autor), "El nombre del autor no puede exceder los 100 caracteres.");
-            }
-            
-            // Validar formato con regex
-            if (!System.Text.RegularExpressions.Regex.IsMatch(form.Autor.Trim(), @"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\.\-']+$"))
-            {
-                ModelState.AddModelError(nameof(form.Autor), "El nombre del autor solo puede contener letras, espacios, puntos, guiones y apóstrofes.");
+                if (form.Titulo.Trim().Length < 2)
+                {
+                    ModelState.AddModelError(nameof(form.Titulo), "El título debe tener al menos 2 caracteres.");
+                }
+                
+                if (form.Titulo.Trim().Length > 200)
+                {
+                    ModelState.AddModelError(nameof(form.Titulo), "El título no puede exceder los 200 caracteres.");
+                }
             }
         }
 
@@ -94,54 +109,113 @@ public class BooksController : Controller
             string mensajeResultado;
 
             // Determinar qué tipo de búsqueda realizar
-            if (form.BuscarTodosLosResultados)
+            if (!string.IsNullOrWhiteSpace(form.Titulo))
             {
-                // Búsqueda completa - obtener todos los resultados disponibles
-                var resultadoCompleto = await _ol.BuscarPorAutorCompletoAsync(form.Autor!.Trim(), ct);
-                resultados = resultadoCompleto.Libros;
-                
-                if (resultadoCompleto.TotalResultados > 0)
+                // Búsqueda por título
+                if (form.BuscarTodosLosResultados)
                 {
-                    mensajeResultado = $"Se encontraron {resultadoCompleto.TotalResultados} libro(s) para '{form.Autor}' (búsqueda completa).";
+                    var resultadoCompleto = await _ol.BuscarPorTituloCompletoAsync(form.Titulo.Trim(), ct);
+                    resultados = resultadoCompleto.Libros;
                     
-                    if (resultadoCompleto.HayMasResultados)
+                    if (resultadoCompleto.TotalResultados > 0)
                     {
-                        mensajeResultado += " Algunos resultados pueden no haberse cargado completamente debido a limitaciones de la API.";
+                        mensajeResultado = $"Se encontraron {resultadoCompleto.TotalResultados} libro(s) con el título '{form.Titulo}' (búsqueda completa).";
+                        
+                        if (resultadoCompleto.HayMasResultados)
+                        {
+                            mensajeResultado += " Algunos resultados pueden no haberse cargado completamente debido a limitaciones de la API.";
+                        }
                     }
+                    else
+                    {
+                        mensajeResultado = $"No se encontraron libros con el título '{form.Titulo}'.";
+                    }
+                }
+                else if (form.TipoBusquedaResultados == "personalizado" && form.LimiteResultados > 100)
+                {
+                    resultados = await _ol.BuscarPorTituloConPaginacionAsync(form.Titulo.Trim(), form.LimiteResultados, ct);
+                    mensajeResultado = $"Se encontraron {resultados.Count} libro(s) con el título '{form.Titulo}' (límite: {form.LimiteResultados}).";
                 }
                 else
                 {
-                    mensajeResultado = $"No se encontraron libros para el autor '{form.Autor}'.";
+                    var limite = form.LimiteResultados > 0 ? form.LimiteResultados : 100;
+                    resultados = await _ol.BuscarPorTituloConPaginacionAsync(form.Titulo.Trim(), limite, ct);
+                    mensajeResultado = $"Se encontraron {resultados.Count} libro(s) con el título '{form.Titulo}' (límite: {limite}).";
                 }
             }
-            else if (form.TipoBusquedaResultados == "personalizado" && form.LimiteResultados > 100)
+            else if (!string.IsNullOrWhiteSpace(form.Autor))
             {
-                // Búsqueda personalizada con límite alto
-                resultados = await _ol.BuscarPorAutorConLimiteAsync(form.Autor!.Trim(), form.LimiteResultados, ct);
-                mensajeResultado = $"Se encontraron {resultados.Count} libro(s) para '{form.Autor}' (límite: {form.LimiteResultados}).";
+                // Búsqueda por autor
+                if (form.BuscarTodosLosResultados)
+                {
+                    var resultadoCompleto = await _ol.BuscarPorAutorCompletoAsync(form.Autor!.Trim(), ct);
+                    resultados = resultadoCompleto.Libros;
+                    
+                    if (resultadoCompleto.TotalResultados > 0)
+                    {
+                        mensajeResultado = $"Se encontraron {resultadoCompleto.TotalResultados} libro(s) para '{form.Autor}' (búsqueda completa).";
+                        
+                        if (resultadoCompleto.HayMasResultados)
+                        {
+                            mensajeResultado += " Algunos resultados pueden no haberse cargado completamente debido a limitaciones de la API.";
+                        }
+                    }
+                    else
+                    {
+                        mensajeResultado = $"No se encontraron libros para el autor '{form.Autor}'.";
+                    }
+                }
+                else if (form.TipoBusquedaResultados == "personalizado" && form.LimiteResultados > 100)
+                {
+                    resultados = await _ol.BuscarPorAutorConLimiteAsync(form.Autor!.Trim(), form.LimiteResultados, ct);
+                    mensajeResultado = $"Se encontraron {resultados.Count} libro(s) para '{form.Autor}' (límite: {form.LimiteResultados}).";
+                }
+                else
+                {
+                    var limite = form.LimiteResultados > 0 ? form.LimiteResultados : 100;
+                    resultados = await _ol.BuscarPorAutorConPaginacionAsync(form.Autor!.Trim(), limite, ct);
+                    mensajeResultado = $"Se encontraron {resultados.Count} libro(s) para '{form.Autor}' (límite: {limite}).";
+                }
             }
             else
             {
-                // Búsqueda estándar con límite por defecto o personalizado
-                var limite = form.LimiteResultados > 0 ? form.LimiteResultados : 100;
-                resultados = await _ol.BuscarPorAutorConPaginacionAsync(form.Autor!.Trim(), limite, ct);
-                mensajeResultado = $"Se encontraron {resultados.Count} libro(s) para '{form.Autor}' (límite: {limite}).";
+                // Búsqueda avanzada
+                resultados = await _ol.BusquedaAvanzadaAsync(
+                    titulo: form.Titulo,
+                    autor: form.Autor,
+                    idioma: form.Idioma,
+                    anioDesde: form.AnioDesde,
+                    anioHasta: form.AnioHasta,
+                    formato: form.Formato,
+                    ct: ct
+                );
+                mensajeResultado = $"Se encontraron {resultados.Count} libro(s) con los criterios de búsqueda avanzada.";
             }
 
             form.Resultados = resultados;
             form.TotalItems = resultados.Count;
 
-            // EXTRA: Evitar guardar si hubo una búsqueda del mismo autor hace < 1 min
+            // EXTRA: Evitar guardar si hubo una búsqueda reciente hace < 1 min
             var umbral = DateTime.UtcNow.AddMinutes(-1);
-            bool hayBusquedaReciente = await _db.HistorialBusquedas
-                .AnyAsync(h => h.Autor == form.Autor && h.FechaConsulta >= umbral, ct);
+            bool hayBusquedaReciente = false;
+            
+            if (!string.IsNullOrWhiteSpace(form.Autor))
+            {
+                hayBusquedaReciente = await _db.HistorialBusquedas
+                    .AnyAsync(h => h.Autor == form.Autor && h.FechaConsulta >= umbral, ct);
+            }
+            else if (!string.IsNullOrWhiteSpace(form.Titulo))
+            {
+                hayBusquedaReciente = await _db.HistorialBusquedas
+                    .AnyAsync(h => h.Titulo == form.Titulo && h.FechaConsulta >= umbral, ct);
+            }
 
             if (!hayBusquedaReciente && resultados.Count > 0)
             {
                 var ahora = DateTime.UtcNow;
                 var filas = resultados.Select(r => new SearchHistory
                 {
-                    Autor = form.Autor!,
+                    Autor = form.Autor ?? "Búsqueda por título",
                     Titulo = r.Titulo,
                     AnioPublicacion = r.AnioPublicacion,
                     Editorial = r.Editorial,
@@ -224,6 +298,34 @@ public class BooksController : Controller
                 };
             }
 
+            // Guardar en el historial de visualización
+            try
+            {
+                var viewHistory = new ViewHistory
+                {
+                    Titulo = libro.Titulo,
+                    Autor = libro.Autor,
+                    Idioma = libro.Idioma,
+                    AnioPublicacion = libro.AnioPublicacion,
+                    Formato = libro.Formato,
+                    CoverUrl = libro.CoverUrl,
+                    OpenLibraryUrl = libro.OpenLibraryUrl,
+                    FechaVisualizacion = DateTime.UtcNow,
+                    IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                    UserAgent = HttpContext.Request.Headers["User-Agent"].ToString()
+                };
+
+                _db.HistorialVisualizacion.Add(viewHistory);
+                await _db.SaveChangesAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                // Log del error pero no fallar la vista
+                #if DEBUG
+                System.Diagnostics.Debug.WriteLine($"Error al guardar historial de visualización: {ex.Message}");
+                #endif
+            }
+
             return View(libro);
         }
         catch (Exception ex)
@@ -237,6 +339,67 @@ public class BooksController : Controller
             #endif
             
             return RedirectToAction(nameof(Index));
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Recommendations(CancellationToken ct)
+    {
+        try
+        {
+            // Obtener libros del historial de visualización para generar recomendaciones
+            var librosVistos = await _db.HistorialVisualizacion
+                .OrderByDescending(h => h.FechaVisualizacion)
+                .Take(20)
+                .ToListAsync(ct);
+
+            var recomendaciones = new List<BookRecommendation>();
+
+            foreach (var libro in librosVistos)
+            {
+                // Generar recomendaciones basadas en género, idioma y formato
+                var recomendacionesGenero = await _db.RecomendacionesLibros
+                    .Where(r => r.Genero != null && r.EsActiva)
+                    .OrderByDescending(r => r.PuntuacionSimilitud)
+                    .Take(5)
+                    .ToListAsync(ct);
+
+                var recomendacionesIdioma = await _db.RecomendacionesLibros
+                    .Where(r => r.Idioma == libro.Idioma && r.EsActiva)
+                    .OrderByDescending(r => r.PuntuacionSimilitud)
+                    .Take(5)
+                    .ToListAsync(ct);
+
+                var recomendacionesFormato = await _db.RecomendacionesLibros
+                    .Where(r => r.Formato == libro.Formato && r.EsActiva)
+                    .OrderByDescending(r => r.PuntuacionSimilitud)
+                    .Take(5)
+                    .ToListAsync(ct);
+
+                recomendaciones.AddRange(recomendacionesGenero);
+                recomendaciones.AddRange(recomendacionesIdioma);
+                recomendaciones.AddRange(recomendacionesFormato);
+            }
+
+            // Eliminar duplicados y ordenar por puntuación
+            var recomendacionesUnicas = recomendaciones
+                .GroupBy(r => r.TituloRecomendado)
+                .Select(g => g.OrderByDescending(r => r.PuntuacionSimilitud).First())
+                .OrderByDescending(r => r.PuntuacionSimilitud)
+                .Take(20)
+                .ToList();
+
+            return View(recomendacionesUnicas);
+        }
+        catch (Exception ex)
+        {
+            ModelState.AddModelError("", "Ocurrió un error al cargar las recomendaciones.");
+            
+            #if DEBUG
+            ModelState.AddModelError("", $"Error detallado: {ex.Message}");
+            #endif
+            
+            return View(new List<BookRecommendation>());
         }
     }
 }

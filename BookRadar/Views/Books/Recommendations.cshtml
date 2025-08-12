@@ -1,0 +1,211 @@
+@model List<BookRadar.Web.Models.BookRecommendation>
+@{
+    ViewData["Title"] = "Recomendaciones";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-lightbulb text-warning me-2"></i>
+                    Recomendaciones Personalizadas
+                </h2>
+                <a href="@Url.Action("Index", "Books")" class="btn btn-outline-primary">
+                    <i class="fas fa-search me-2"></i>
+                    Nueva Búsqueda
+                </a>
+            </div>
+
+            @if (!Model.Any())
+            {
+                <div class="text-center py-5">
+                    <div class="empty-state">
+                        <i class="fas fa-lightbulb fa-3x text-muted mb-3"></i>
+                        <h4>No hay recomendaciones disponibles</h4>
+                        <p class="text-muted">
+                            Para recibir recomendaciones personalizadas, primero debes ver algunos libros.
+                            <br>
+                            ¡Comienza explorando nuestra biblioteca!
+                        </p>
+                        <a href="@Url.Action("Index", "Books")" class="btn btn-primary">
+                            <i class="fas fa-search me-2"></i>
+                            Buscar Libros
+                        </a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    @foreach (var recomendacion in Model)
+                    {
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100 recommendation-card">
+                                @if (!string.IsNullOrEmpty(recomendacion.CoverUrl))
+                                {
+                                    <img src="@recomendacion.CoverUrl" 
+                                         class="card-img-top recommendation-cover" 
+                                         alt="Portada de @recomendacion.TituloRecomendado"
+                                         onerror="this.style.display='none'">
+                                }
+                                
+                                <div class="card-body">
+                                    <h5 class="card-title recommendation-title">
+                                        @recomendacion.TituloRecomendado
+                                    </h5>
+                                    
+                                    @if (!string.IsNullOrEmpty(recomendacion.AutorRecomendado))
+                                    {
+                                        <p class="card-text recommendation-author">
+                                            <i class="fas fa-user text-muted me-2"></i>
+                                            @recomendacion.AutorRecomendado
+                                        </p>
+                                    }
+                                    
+                                    <div class="recommendation-details">
+                                        @if (!string.IsNullOrEmpty(recomendacion.Genero))
+                                        {
+                                            <span class="badge bg-primary me-1 mb-1">
+                                                <i class="fas fa-tag me-1"></i>
+                                                @recomendacion.Genero
+                                            </span>
+                                        }
+                                        
+                                        @if (!string.IsNullOrEmpty(recomendacion.Idioma))
+                                        {
+                                            <span class="badge bg-info me-1 mb-1">
+                                                <i class="fas fa-language me-1"></i>
+                                                @recomendacion.Idioma.ToUpper()
+                                            </span>
+                                        }
+                                        
+                                        @if (!string.IsNullOrEmpty(recomendacion.Formato))
+                                        {
+                                            <span class="badge bg-secondary me-1 mb-1">
+                                                <i class="fas fa-file-alt me-1"></i>
+                                                @recomendacion.Formato
+                                            </span>
+                                        }
+                                        
+                                        @if (recomendacion.AnioPublicacion.HasValue)
+                                        {
+                                            <span class="badge bg-success me-1 mb-1">
+                                                <i class="fas fa-calendar me-1"></i>
+                                                @recomendacion.AnioPublicacion
+                                            </span>
+                                        }
+                                    </div>
+                                    
+                                    <div class="recommendation-score mt-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-star text-warning me-1"></i>
+                                            Puntuación: @recomendacion.PuntuacionSimilitud.ToString("F1")
+                                        </small>
+                                    </div>
+                                    
+                                    <div class="recommendation-reason mt-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Recomendado por: @recomendacion.TipoRecomendacion
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <div class="card-footer">
+                                    @if (!string.IsNullOrEmpty(recomendacion.OpenLibraryUrl))
+                                    {
+                                        <a href="@recomendacion.OpenLibraryUrl" 
+                                           class="btn btn-outline-primary btn-sm w-100" 
+                                           target="_blank">
+                                            <i class="fas fa-external-link-alt me-2"></i>
+                                            Ver en Open Library
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-outline-secondary btn-sm w-100" disabled>
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            Información no disponible
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                
+                <div class="recommendation-info mt-4">
+                    <div class="alert alert-info">
+                        <h6>
+                            <i class="fas fa-info-circle me-2"></i>
+                            ¿Cómo funcionan las recomendaciones?
+                        </h6>
+                        <p class="mb-2">
+                            Nuestro sistema analiza los libros que has visto recientemente y genera 
+                            recomendaciones basadas en:
+                        </p>
+                        <ul class="mb-0">
+                            <li><strong>Géneros similares:</strong> Libros del mismo género literario</li>
+                            <li><strong>Idioma:</strong> Libros en el mismo idioma que prefieres</li>
+                            <li><strong>Formato:</strong> Libros en el formato que sueles leer</li>
+                            <li><strong>Autores relacionados:</strong> Escritores con estilos similares</li>
+                        </ul>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .recommendation-card {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        border: 1px solid #e9ecef;
+    }
+    
+    .recommendation-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    .recommendation-cover {
+        height: 200px;
+        object-fit: cover;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .recommendation-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2c3e50;
+        line-height: 1.3;
+        margin-bottom: 0.75rem;
+    }
+    
+    .recommendation-author {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .recommendation-details {
+        margin-bottom: 1rem;
+    }
+    
+    .recommendation-score {
+        font-size: 0.85rem;
+    }
+    
+    .recommendation-reason {
+        font-size: 0.85rem;
+    }
+    
+    .empty-state {
+        padding: 3rem 1rem;
+    }
+    
+    .empty-state i {
+        color: #6c757d;
+    }
+</style>

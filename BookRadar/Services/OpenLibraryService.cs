@@ -189,6 +189,7 @@ public class OpenLibraryService : IOpenLibraryService
             Generos = new List<string>(), // OpenLibrary no proporciona géneros directamente
             Idioma = doc.language?.FirstOrDefault()?.ToUpperInvariant(),
             Formato = DeterminarFormato(doc.ebook_access),
+            WorkKey = doc.key, // Guardar la clave del trabajo directamente
             OpenLibraryUrl = doc.key != null ? $"https://openlibrary.org{doc.key}" : null,
             CoverUrl = doc.cover_i.HasValue ? $"https://covers.openlibrary.org/b/id/{doc.cover_i}-L.jpg" : null,
             NumeroPaginas = null, // OpenLibrary no proporciona número de páginas en la búsqueda
@@ -251,10 +252,43 @@ public class OpenLibraryService : IOpenLibraryService
     {
         try
         {
-            var url = $"works/{workKey}.json";
-            var work = await _http.GetFromJsonAsync<dynamic>(url, ct);
+            // Limpiar el workKey para asegurar que no tenga /works/ duplicado
+            var cleanWorkKey = workKey.TrimStart('/');
+            if (cleanWorkKey.StartsWith("works/"))
+            {
+                cleanWorkKey = cleanWorkKey.Substring(6); // Remover "works/"
+            }
             
-            if (work == null) return null;
+            var url = $"works/{cleanWorkKey}.json";
+            Console.WriteLine($"Llamando a Open Library API: {url}");
+            
+            dynamic? work = null;
+            try
+            {
+                work = await _http.GetFromJsonAsync<dynamic>(url, ct);
+                
+                if (work == null) 
+                {
+                    Console.WriteLine($"No se recibió respuesta de la API para: {url}");
+                    return null;
+                }
+                
+                Console.WriteLine($"Respuesta recibida de la API. Tipo: {work.GetType()}");
+                Console.WriteLine($"Respuesta recibida de la API. Título: {work.title}");
+                
+                // Verificar si la respuesta tiene la estructura esperada
+                if (work.title == null)
+                {
+                    Console.WriteLine("La respuesta no tiene título. Respuesta completa:");
+                    Console.WriteLine(work.ToString());
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al deserializar la respuesta: {ex.Message}");
+                Console.WriteLine($"URL que falló: {url}");
+                return null;
+            }
 
             // Crear un libro con la información disponible
             var libro = new BookVm
@@ -265,7 +299,8 @@ public class OpenLibraryService : IOpenLibraryService
                     int.TryParse(work.first_publish_date.ToString(), out int year) ? year : null : null,
                 Descripcion = work.description?.ToString() ?? work.subtitle?.ToString(),
                 Idioma = work.languages?.FirstOrDefault()?.key?.ToString()?.ToUpperInvariant(),
-                OpenLibraryUrl = $"https://openlibrary.org{workKey}",
+                WorkKey = workKey,
+                OpenLibraryUrl = $"https://openlibrary.org/works/{cleanWorkKey}",
                 Generos = new List<string>()
             };
 
@@ -303,6 +338,203 @@ public class OpenLibraryService : IOpenLibraryService
         {
             Console.WriteLine($"Error obteniendo detalles del libro {workKey}: {ex.Message}");
             return null;
+        }
+    }
+
+    // Implementar métodos faltantes de la interfaz
+    public async Task<List<BookVm>> BuscarPorTituloAsync(string titulo, CancellationToken ct = default)
+    {
+        var limiteReal = DEFAULT_PAGE_SIZE;
+        var url = $"search.json?title={Uri.EscapeDataString(titulo)}&limit={limiteReal}";
+        var resp = await _http.GetFromJsonAsync<OpenLibraryResponse>(url, ct);
+
+        var list = new List<BookVm>();
+        if (resp?.docs is null) return list;
+
+        foreach (var d in resp.docs)
+        {
+            if (string.IsNullOrWhiteSpace(d.title)) continue;
+            list.Add(ConvertirDocABookVm(d));
+        }
+
+        return list
+            .OrderByDescending(x => x.AnioPublicacion ?? int.MinValue)
+            .ThenBy(x => x.Titulo)
+            .ToList();
+    }
+
+    public async Task<List<BookVm>> BuscarPorTituloConPaginacionAsync(string titulo, int? limite = null, CancellationToken ct = default)
+    {
+        var limiteReal = limite ?? DEFAULT_PAGE_SIZE;
+        var url = $"search.json?title={Uri.EscapeDataString(titulo)}&limit={limiteReal}";
+        var resp = await _http.GetFromJsonAsync<OpenLibraryResponse>(url, ct);
+
+        var list = new List<BookVm>();
+        if (resp?.docs is null) return list;
+
+        foreach (var d in resp.docs)
+        {
+            if (string.IsNullOrWhiteSpace(d.title)) continue;
+            list.Add(ConvertirDocABookVm(d));
+        }
+
+        return list
+            .OrderByDescending(x => x.AnioPublicacion ?? int.MinValue)
+            .ThenBy(x => x.Titulo)
+            .ToList();
+    }
+
+    public async Task<OpenLibrarySearchResult> BuscarPorTituloCompletoAsync(string titulo, CancellationToken ct = default)
+    {
+        var resultado = new OpenLibrarySearchResult();
+        var todosLosLibros = new List<BookVm>();
+        var totalResultados = 0;
+
+        try
+        {
+            // Primera llamada para obtener el total de resultados
+            var primeraUrl = $"search.json?title={Uri.EscapeDataString(titulo)}&limit={DEFAULT_PAGE_SIZE}&offset=0";
+            var primeraResp = await _http.GetFromJsonAsync<OpenLibraryResponse>(primeraUrl, ct);
+            
+            if (primeraResp == null)
+            {
+                return resultado;
+            }
+
+            totalResultados = primeraResp.numFound;
+            resultado.TotalResultados = totalResultados;
+            resultado.TamañoPagina = DEFAULT_PAGE_SIZE;
+
+            // Si hay más de 100 resultados, hacer llamadas adicionales
+            if (totalResultados > DEFAULT_PAGE_SIZE)
+            {
+                // Procesar primera página
+                todosLosLibros.AddRange(ProcesarDocs(primeraResp.docs));
+
+                // Calcular cuántas páginas necesitamos
+                var totalPaginas = (int)Math.Ceiling((double)totalResultados / DEFAULT_PAGE_SIZE);
+                resultado.TotalPaginas = totalPaginas;
+
+                // Hacer llamadas adicionales para obtener todas las páginas
+                var tareas = new List<Task<List<BookVm>>>();
+                
+                for (int i = 1; i < totalPaginas && i < 100; i++) // Limitar a 100 páginas para evitar sobrecarga
+                {
+                    var offset = i * DEFAULT_PAGE_SIZE;
+                    var url = $"search.json?title={Uri.EscapeDataString(titulo)}&limit={DEFAULT_PAGE_SIZE}&offset={offset}";
+                    
+                    tareas.Add(ObtenerPaginaAsync(url, ct));
+                }
+
+                // Esperar todas las tareas
+                var resultadosPaginas = await Task.WhenAll(tareas);
+                foreach (var librosPagina in resultadosPaginas)
+                {
+                    todosLosLibros.AddRange(librosPagina);
+                }
+
+                resultado.HayMasResultados = todosLosLibros.Count < totalResultados;
+                resultado.SiguienteUrl = todosLosLibros.Count < totalResultados 
+                    ? $"search.json?title={Uri.EscapeDataString(titulo)}&limit={DEFAULT_PAGE_SIZE}&offset={todosLosLibros.Count}"
+                    : null;
+            }
+            else
+            {
+                // Solo una página, procesar directamente
+                todosLosLibros.AddRange(ProcesarDocs(primeraResp.docs));
+                resultado.TotalPaginas = 1;
+                resultado.HayMasResultados = false;
+            }
+
+            // Ordenar todos los libros
+            resultado.Libros = todosLosLibros
+                .OrderByDescending(x => x.AnioPublicacion ?? int.MinValue)
+                .ThenBy(x => x.Titulo)
+                .ToList();
+
+            resultado.PaginaActual = 1;
+            resultado.TotalResultados = resultado.Libros.Count;
+
+            return resultado;
+        }
+        catch (Exception ex)
+        {
+            // Log del error (en producción usar ILogger)
+            Console.WriteLine($"Error en búsqueda completa por título: {ex.Message}");
+            
+            // Retornar resultado parcial si es posible
+            resultado.Libros = todosLosLibros;
+            resultado.TotalResultados = todosLosLibros.Count;
+            resultado.HayMasResultados = false;
+            
+            return resultado;
+        }
+    }
+
+    public async Task<List<BookVm>> BusquedaAvanzadaAsync(string? titulo = null, string? autor = null, string? idioma = null, 
+                                            int? anioDesde = null, int? anioHasta = null, string? formato = null, 
+                                            CancellationToken ct = default)
+    {
+        var parametros = new List<string>();
+        
+        if (!string.IsNullOrWhiteSpace(titulo))
+            parametros.Add($"title={Uri.EscapeDataString(titulo)}");
+        
+        if (!string.IsNullOrWhiteSpace(autor))
+            parametros.Add($"author={Uri.EscapeDataString(autor)}");
+        
+        if (!string.IsNullOrWhiteSpace(idioma))
+            parametros.Add($"language={Uri.EscapeDataString(idioma)}");
+        
+        if (anioDesde.HasValue)
+            parametros.Add($"first_publish_year=[{anioDesde.Value} TO *]");
+        
+        if (anioHasta.HasValue)
+            parametros.Add($"first_publish_year=[* TO {anioHasta.Value}]");
+        
+        if (!string.IsNullOrWhiteSpace(formato))
+        {
+            // Mapear formato a parámetros de OpenLibrary
+            var formatoParam = formato.ToLowerInvariant() switch
+            {
+                "ebook" => "ebook_access:public",
+                "impreso" => "ebook_access:no_ebook",
+                "prestable" => "ebook_access:borrowable",
+                _ => ""
+            };
+            
+            if (!string.IsNullOrWhiteSpace(formatoParam))
+                parametros.Add(formatoParam);
+        }
+        
+        // Agregar límite por defecto
+        parametros.Add($"limit={DEFAULT_PAGE_SIZE}");
+        
+        var queryString = string.Join("&", parametros);
+        var url = $"search.json?{queryString}";
+        
+        try
+        {
+            var resp = await _http.GetFromJsonAsync<OpenLibraryResponse>(url, ct);
+            var list = new List<BookVm>();
+            
+            if (resp?.docs is null) return list;
+
+            foreach (var d in resp.docs)
+            {
+                if (string.IsNullOrWhiteSpace(d.title)) continue;
+                list.Add(ConvertirDocABookVm(d));
+            }
+
+            return list
+                .OrderByDescending(x => x.AnioPublicacion ?? int.MinValue)
+                .ThenBy(x => x.Titulo)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error en búsqueda avanzada: {ex.Message}");
+            return new List<BookVm>();
         }
     }
 }

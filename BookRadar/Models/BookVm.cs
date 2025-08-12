@@ -11,6 +11,7 @@ public class BookVm
     public string? Descripcion { get; set; }
     public string? CoverUrl { get; set; }
     public string? OpenLibraryUrl { get; set; }
+    public string? WorkKey { get; set; } // Clave única del trabajo en Open Library (ej: /works/OL12345W)
     public List<string> Generos { get; set; } = new();
     public int? NumeroPaginas { get; set; }
     public string? Formato { get; set; } // ebook, hardcover, paperback, etc.

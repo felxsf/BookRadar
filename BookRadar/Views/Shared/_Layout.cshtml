@@ -40,6 +40,12 @@
                                 <span>Historial</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Books" asp-action="Recommendations">
+                                <i class="fas fa-lightbulb me-2"></i>
+                                <span>Recomendaciones</span>
+                            </a>
+                        </li>
                     </ul>
                     
                     <div class="navbar-nav">
@@ -91,6 +97,7 @@
                     <ul class="footer-links">
                         <li><a asp-controller="Books" asp-action="Index">Buscar Libros</a></li>
                         <li><a asp-controller="Books" asp-action="History">Historial</a></li>
+                        <li><a asp-controller="Books" asp-action="Recommendations">Recomendaciones</a></li>
                         <li><a href="https://openlibrary.org" target="_blank">Open Library</a></li>
                     </ul>
                 </div>
